@@ -9,10 +9,12 @@ interface MixCardProps {
   title: string;
   description: string;
   ingredients: Ingredient[];
+  author_name?: string;
   onLoadToEditor?: () => void;
+  onSubmitForApproval?: () => void;
 }
 
-export default function MixCard({ 
+export default function MixCard({
   title, 
   description, 
   ingredients, 
