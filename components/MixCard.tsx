@@ -9,7 +9,8 @@ interface MixCardProps {
   title: string;
   description: string;
   ingredients: Ingredient[];
-  author_name?: string;
+  // Добавили | null, чтобы TypeScript не ругался на данные из базы
+  author_name?: string | null; 
   onLoadToEditor?: () => void;
   onSubmitForApproval?: () => void;
 }
@@ -93,5 +94,3 @@ export default function MixCard({
     </>
   );
 }
-
-// force update
