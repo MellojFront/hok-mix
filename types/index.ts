@@ -11,6 +11,8 @@ export interface Mix {
   ingredients: Ingredient[];
   createdAt: number;
   updatedAt: number;
+  author_name?: string | null;
+  is_official?: boolean;
 }
 
 export interface KnowledgeNote {

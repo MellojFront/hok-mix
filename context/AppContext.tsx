@@ -2,19 +2,23 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Mix, KnowledgeNote } from '@/types';
+import { useAuth } from './AuthContext';
+import { getOfficialMixes, getUserMixes, createMix, updateMix, deleteMix as deleteMixFromDB } from '@/lib/mixes';
+import { supabase } from '@/lib/supabase';
 
 interface AppContextType {
   // Мои миксы
   myMixes: Mix[];
-  addMix: (mix: Omit<Mix, 'id' | 'createdAt' | 'updatedAt'>) => void;
-  updateMix: (id: string, mix: Partial<Mix>) => void;
-  deleteMix: (id: string) => void;
+  loading: boolean;
+  addMix: (mix: Omit<Mix, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+  updateMix: (id: string, mix: Partial<Mix>) => Promise<void>;
+  deleteMix: (id: string) => Promise<void>;
   
-  // Готовые миксы (шаблоны)
+  // Готовые миксы (официальные)
   readyMixes: Mix[];
-  addReadyMix: (mix: Omit<Mix, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  refreshReadyMixes: () => Promise<void>;
   
-  // База знаний
+  // База знаний (пока LocalStorage)
   knowledgeNotes: KnowledgeNote[];
   addNote: (note: Omit<KnowledgeNote, 'id' | 'createdAt' | 'updatedAt'>) => void;
   updateNote: (id: string, note: Partial<KnowledgeNote>) => void;
@@ -24,8 +28,6 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 const STORAGE_KEYS = {
-  MY_MIXES: 'hok-mix-my-mixes',
-  READY_MIXES: 'hok-mix-ready-mixes',
   KNOWLEDGE_NOTES: 'hok-mix-knowledge-notes',
 };
 
@@ -228,92 +230,54 @@ BURLEY (Берли):
   },
 ];
 
-// Начальные готовые миксы
-const initialReadyMixes: Mix[] = [
-  {
-    id: '1',
-    title: 'Тропический Шторм',
-    description: 'Яркий, освежающий микс с тропическими нотами и кислинкой.',
-    ingredients: [
-      { name: 'Манго', percentage: 50 },
-      { name: 'Лимон', percentage: 30 },
-      { name: 'Мята / Холодок', percentage: 20 },
-    ],
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  },
-  {
-    id: '2',
-    title: 'Восточный Кофе',
-    description: 'Теплый, согревающий десертный микс с пряностями.',
-    ingredients: [
-      { name: 'Кофе / Тирамису', percentage: 60 },
-      { name: 'Ваниль / Крем', percentage: 30 },
-      { name: 'Специи (Кардамон)', percentage: 10 },
-    ],
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  },
-  {
-    id: '3',
-    title: 'Красный Чай',
-    description: 'Легкий ягодный вкус с кислинкой, напоминающий каркаде.',
-    ingredients: [
-      { name: 'Вишня', percentage: 40 },
-      { name: 'Ягода (Смесь)', percentage: 35 },
-      { name: 'Лимон', percentage: 25 },
-    ],
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  },
-  {
-    id: '4',
-    title: 'Морозное Яблоко',
-    description: 'Классический вкус зеленого яблока с мощным охлаждением. Освежающий и терпкий.',
-    ingredients: [
-      { name: 'Зеленое Яблоко', percentage: 65 },
-      { name: 'Мята / Холодок', percentage: 35 },
-    ],
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  },
-];
-
 export function AppProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
   const [myMixes, setMyMixes] = useState<Mix[]>([]);
   const [readyMixes, setReadyMixes] = useState<Mix[]>([]);
   const [knowledgeNotes, setKnowledgeNotes] = useState<KnowledgeNote[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Загрузка данных из LocalStorage
+  // Загрузка данных
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    loadData();
+  }, [user]);
 
-    // Загружаем мои миксы
-    const savedMyMixes = localStorage.getItem(STORAGE_KEYS.MY_MIXES);
-    if (savedMyMixes) {
-      setMyMixes(JSON.parse(savedMyMixes));
-    }
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      // Загружаем официальные миксы (для всех)
+      const official = await getOfficialMixes();
+      setReadyMixes(official);
 
-    // Загружаем готовые миксы
-    const savedReadyMixes = localStorage.getItem(STORAGE_KEYS.READY_MIXES);
-    if (savedReadyMixes) {
-      setReadyMixes(JSON.parse(savedReadyMixes));
-    } else {
-      // Инициализируем начальными данными
-      setReadyMixes(initialReadyMixes);
-      localStorage.setItem(STORAGE_KEYS.READY_MIXES, JSON.stringify(initialReadyMixes));
-    }
+      // Загружаем личные миксы (только если пользователь авторизован)
+      if (user) {
+        const userMixes = await getUserMixes(user.id);
+        setMyMixes(userMixes);
+      } else {
+        setMyMixes([]);
+      }
 
-    // Загружаем заметки
-    const savedNotes = localStorage.getItem(STORAGE_KEYS.KNOWLEDGE_NOTES);
-    if (savedNotes) {
-      setKnowledgeNotes(JSON.parse(savedNotes));
-    } else {
-      // Инициализируем начальными данными
-      setKnowledgeNotes(initialKnowledgeNotes);
-      localStorage.setItem(STORAGE_KEYS.KNOWLEDGE_NOTES, JSON.stringify(initialKnowledgeNotes));
+      // Загружаем заметки из LocalStorage
+      if (typeof window !== 'undefined') {
+        const savedNotes = localStorage.getItem(STORAGE_KEYS.KNOWLEDGE_NOTES);
+        if (savedNotes) {
+          setKnowledgeNotes(JSON.parse(savedNotes));
+        } else {
+          setKnowledgeNotes(initialKnowledgeNotes);
+          localStorage.setItem(STORAGE_KEYS.KNOWLEDGE_NOTES, JSON.stringify(initialKnowledgeNotes));
+        }
+      }
+    } catch (error) {
+      console.error('Error loading data:', error);
+    } finally {
+      setLoading(false);
     }
-  }, []);
+  };
+
+  const refreshReadyMixes = async () => {
+    const official = await getOfficialMixes();
+    setReadyMixes(official);
+  };
 
   // Сохранение в LocalStorage
   const saveToStorage = (key: string, data: any) => {
@@ -323,43 +287,35 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   // Мои миксы
-  const addMix = (mix: Omit<Mix, 'id' | 'createdAt' | 'updatedAt'>) => {
-    const newMix: Mix = {
-      ...mix,
-      id: Date.now().toString(),
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    };
-    const updated = [...myMixes, newMix];
-    setMyMixes(updated);
-    saveToStorage(STORAGE_KEYS.MY_MIXES, updated);
+  const addMix = async (mix: Omit<Mix, 'id' | 'createdAt' | 'updatedAt'>) => {
+    if (!user) {
+      throw new Error('Необходима авторизация');
+    }
+
+    const newMix = await createMix(mix, user.id, false);
+    if (newMix) {
+      setMyMixes([newMix, ...myMixes]);
+    }
   };
 
-  const updateMix = (id: string, mix: Partial<Mix>) => {
-    const updated = myMixes.map((m) =>
-      m.id === id ? { ...m, ...mix, updatedAt: Date.now() } : m
-    );
-    setMyMixes(updated);
-    saveToStorage(STORAGE_KEYS.MY_MIXES, updated);
+  const updateMixHandler = async (id: string, mix: Partial<Mix>) => {
+    if (!user) {
+      throw new Error('Необходима авторизация');
+    }
+
+    const updated = await updateMix(id, mix, user.id);
+    if (updated) {
+      setMyMixes(myMixes.map((m) => (m.id === id ? updated : m)));
+    }
   };
 
-  const deleteMix = (id: string) => {
-    const updated = myMixes.filter((m) => m.id !== id);
-    setMyMixes(updated);
-    saveToStorage(STORAGE_KEYS.MY_MIXES, updated);
-  };
+  const deleteMixHandler = async (id: string) => {
+    if (!user) {
+      throw new Error('Необходима авторизация');
+    }
 
-  // Готовые миксы
-  const addReadyMix = (mix: Omit<Mix, 'id' | 'createdAt' | 'updatedAt'>) => {
-    const newMix: Mix = {
-      ...mix,
-      id: Date.now().toString(),
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    };
-    const updated = [...readyMixes, newMix];
-    setReadyMixes(updated);
-    saveToStorage(STORAGE_KEYS.READY_MIXES, updated);
+    await deleteMixFromDB(id, user.id);
+    setMyMixes(myMixes.filter((m) => m.id !== id));
   };
 
   // База знаний
@@ -393,11 +349,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     <AppContext.Provider
       value={{
         myMixes,
+        loading,
         addMix,
-        updateMix,
-        deleteMix,
+        updateMix: updateMixHandler,
+        deleteMix: deleteMixHandler,
         readyMixes,
-        addReadyMix,
+        refreshReadyMixes,
         knowledgeNotes,
         addNote,
         updateNote,
@@ -416,4 +373,3 @@ export function useApp() {
   }
   return context;
 }
-

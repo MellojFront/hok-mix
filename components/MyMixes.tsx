@@ -2,12 +2,14 @@
 
 import { useState } from 'react';
 import { useApp } from '@/context/AppContext';
+import { useAuth } from '@/context/AuthContext';
 import { Mix } from '@/types';
 import { Plus, Edit, Trash2, X, Save, Calculator } from 'lucide-react';
 import MixCalculator from './MixCalculator';
 
 export default function MyMixes() {
-  const { myMixes, addMix, updateMix, deleteMix } = useApp();
+  const { myMixes, addMix, updateMix, deleteMix, loading } = useApp();
+  const { user } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingMix, setEditingMix] = useState<Mix | null>(null);
   const [calculatorMix, setCalculatorMix] = useState<Mix | null>(null);
@@ -16,6 +18,7 @@ export default function MyMixes() {
     description: '',
     ingredients: [{ name: '', percentage: 0 }],
   });
+  const [error, setError] = useState<string | null>(null);
 
   const openAddModal = () => {
     setEditingMix(null);
@@ -57,37 +60,78 @@ export default function MyMixes() {
     setFormData({ ...formData, ingredients: updated });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const totalPercentage = formData.ingredients.reduce((sum, ing) => sum + ing.percentage, 0);
-    if (Math.abs(totalPercentage - 100) > 0.01) {
-      alert(`Сумма процентов должна быть 100%. Сейчас: ${totalPercentage}%`);
+    setError(null);
+
+    // Валидация
+    if (!formData.title.trim()) {
+      setError('Введите название микса');
       return;
     }
 
-    if (editingMix) {
-      updateMix(editingMix.id, formData);
-    } else {
-      addMix(formData);
+    if (!formData.description.trim()) {
+      setError('Введите описание микса');
+      return;
     }
-    setIsModalOpen(false);
+
+    if (formData.ingredients.length === 0) {
+      setError('Добавьте хотя бы один ингредиент');
+      return;
+    }
+
+    if (formData.ingredients.some(ing => !ing.name.trim())) {
+      setError('Заполните названия всех ингредиентов');
+      return;
+    }
+
+    const totalPercentage = formData.ingredients.reduce((sum, ing) => sum + ing.percentage, 0);
+    if (Math.abs(totalPercentage - 100) > 0.01) {
+      setError(`Сумма процентов должна быть 100%. Сейчас: ${totalPercentage.toFixed(1)}%`);
+      return;
+    }
+
+    try {
+      if (editingMix) {
+        await updateMix(editingMix.id, formData);
+      } else {
+        await addMix(formData);
+      }
+      setIsModalOpen(false);
+      setFormData({
+        title: '',
+        description: '',
+        ingredients: [{ name: '', percentage: 0 }],
+      });
+    } catch (err: any) {
+      setError(err.message || 'Ошибка при сохранении микса');
+    }
   };
 
   return (
     <div>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <h2 className="text-xl sm:text-2xl font-bold text-slate-100">Мои Миксы</h2>
-        <button
-          onClick={openAddModal}
-          className="w-full sm:w-auto px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-red-900/50 hover:shadow-xl hover:shadow-red-900/60 active:scale-[0.98] font-medium text-sm sm:text-base"
-        >
-          <Plus className="w-4 h-4" />
-          Добавить микс
-        </button>
+        {user ? (
+          <button
+            onClick={openAddModal}
+            className="w-full sm:w-auto px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-red-900/50 hover:shadow-xl hover:shadow-red-900/60 active:scale-[0.98] font-medium text-sm sm:text-base"
+          >
+            <Plus className="w-4 h-4" />
+            Добавить микс
+          </button>
+        ) : (
+          <p className="text-sm text-slate-400">Войдите, чтобы создавать миксы</p>
+        )}
       </div>
 
-      {myMixes.length === 0 ? (
+      {loading ? (
+        <div className="text-center py-12 text-slate-400">Загрузка...</div>
+      ) : !user ? (
+        <div className="text-center py-12 text-slate-400">
+          <p className="text-base sm:text-lg mb-2">Войдите, чтобы видеть свои миксы</p>
+        </div>
+      ) : myMixes.length === 0 ? (
         <div className="text-center py-12 text-slate-400">
           <p className="text-base sm:text-lg mb-2">У вас пока нет сохраненных миксов</p>
           <p className="text-xs sm:text-sm">Нажмите "Добавить микс" чтобы создать первый</p>
@@ -150,7 +194,15 @@ export default function MyMixes() {
                           <span className="hidden lg:inline">Редактировать</span>
                         </button>
                         <button
-                          onClick={() => deleteMix(mix.id)}
+                          onClick={async () => {
+                            if (confirm('Удалить этот микс?')) {
+                              try {
+                                await deleteMix(mix.id);
+                              } catch (err: any) {
+                                alert(err.message || 'Ошибка при удалении');
+                              }
+                            }
+                          }}
                           className="text-red-400 hover:text-red-300 flex items-center gap-1 transition-colors text-xs"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -189,7 +241,15 @@ export default function MyMixes() {
                       <Edit className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => deleteMix(mix.id)}
+                      onClick={async () => {
+                        if (confirm('Удалить этот микс?')) {
+                          try {
+                            await deleteMix(mix.id);
+                          } catch (err: any) {
+                            alert(err.message || 'Ошибка при удалении');
+                          }
+                        }
+                      }}
                       className="p-2 text-red-400 hover:text-red-300 hover:bg-red-900/30 rounded-lg transition-colors"
                       title="Удалить"
                     >
@@ -233,14 +293,23 @@ export default function MyMixes() {
               </div>
               
               <form onSubmit={handleSubmit} className="space-y-4">
+                {error && (
+                  <div className="p-3 bg-red-900/30 border border-red-700 rounded-lg text-red-400 text-sm">
+                    {error}
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-sm font-medium text-slate-200 mb-1">
-                    Название
+                    Название *
                   </label>
                   <input
                     type="text"
                     value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    onChange={(e) => {
+                      setFormData({ ...formData, title: e.target.value });
+                      setError(null);
+                    }}
                     className="w-full px-3 py-2 bg-slate-700 border border-slate-600 text-slate-100 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 placeholder-slate-400"
                     required
                   />
@@ -248,11 +317,14 @@ export default function MyMixes() {
 
                 <div>
                   <label className="block text-sm font-medium text-slate-200 mb-1">
-                    Описание
+                    Описание *
                   </label>
                   <textarea
                     value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    onChange={(e) => {
+                      setFormData({ ...formData, description: e.target.value });
+                      setError(null);
+                    }}
                     className="w-full px-3 py-2 bg-slate-700 border border-slate-600 text-slate-100 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 placeholder-slate-400"
                     rows={3}
                     required
@@ -279,17 +351,23 @@ export default function MyMixes() {
                       <div key={index} className="flex gap-2">
                         <input
                           type="text"
-                          placeholder="Название"
+                          placeholder="Название *"
                           value={ing.name}
-                          onChange={(e) => handleIngredientChange(index, 'name', e.target.value)}
+                          onChange={(e) => {
+                            handleIngredientChange(index, 'name', e.target.value);
+                            setError(null);
+                          }}
                           className="flex-1 px-3 py-2 bg-slate-700 border border-slate-600 text-slate-100 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 placeholder-slate-400"
                           required
                         />
                         <input
                           type="number"
-                          placeholder="%"
+                          placeholder="% *"
                           value={ing.percentage || ''}
-                          onChange={(e) => handleIngredientChange(index, 'percentage', parseFloat(e.target.value) || 0)}
+                          onChange={(e) => {
+                            handleIngredientChange(index, 'percentage', parseFloat(e.target.value) || 0);
+                            setError(null);
+                          }}
                           className="w-24 px-3 py-2 bg-slate-700 border border-slate-600 text-slate-100 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 placeholder-slate-400"
                           min="0"
                           max="100"

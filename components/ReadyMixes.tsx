@@ -1,25 +1,50 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
+import { useAuth } from '@/context/AuthContext';
 import { Mix } from '@/types';
-import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, Send } from 'lucide-react';
 import MixCard from './MixCard';
+import SubmitMixModal from './SubmitMixModal';
 
 const ITEMS_PER_PAGE = 6;
 
 export default function ReadyMixes() {
-  const { readyMixes, addMix } = useApp();
+  const { readyMixes, addMix, refreshReadyMixes, loading } = useApp();
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [submitMix, setSubmitMix] = useState<Mix | null>(null);
 
-  const handleLoadToEditor = (mix: Mix) => {
-    addMix({
-      title: mix.title,
-      description: mix.description,
-      ingredients: mix.ingredients,
-    });
-    alert('Микс добавлен в "Мои миксы"!');
+  useEffect(() => {
+    refreshReadyMixes();
+  }, []);
+
+  const handleLoadToEditor = async (mix: Mix) => {
+    if (!user) {
+      alert('Войдите, чтобы добавить микс в "Мои миксы"');
+      return;
+    }
+
+    try {
+      await addMix({
+        title: mix.title,
+        description: mix.description,
+        ingredients: mix.ingredients,
+      });
+      alert('Микс добавлен в "Мои миксы"!');
+    } catch (err: any) {
+      alert(err.message || 'Ошибка при добавлении микса');
+    }
+  };
+
+  const handleSubmitForApproval = (mix: Mix) => {
+    if (!user) {
+      alert('Войдите, чтобы предложить микс для публикации');
+      return;
+    }
+    setSubmitMix(mix);
   };
 
   const filteredMixes = useMemo(() => {
@@ -68,7 +93,9 @@ export default function ReadyMixes() {
         </div>
       </div>
 
-      {filteredMixes.length === 0 ? (
+      {loading ? (
+        <div className="text-center py-12 text-slate-400">Загрузка...</div>
+      ) : filteredMixes.length === 0 ? (
         <div className="text-center py-12 text-slate-400">
           <p className="text-lg">Ничего не найдено</p>
         </div>
@@ -81,7 +108,9 @@ export default function ReadyMixes() {
                   title={mix.title}
                   description={mix.description}
                   ingredients={mix.ingredients}
+                  author_name={mix.author_name}
                   onLoadToEditor={() => handleLoadToEditor(mix)}
+                  onSubmitForApproval={() => handleSubmitForApproval(mix)}
                 />
               </div>
             ))}
@@ -137,6 +166,14 @@ export default function ReadyMixes() {
             </div>
           )}
         </>
+      )}
+
+      {submitMix && (
+        <SubmitMixModal
+          isOpen={!!submitMix}
+          onClose={() => setSubmitMix(null)}
+          mix={submitMix}
+        />
       )}
     </div>
   );

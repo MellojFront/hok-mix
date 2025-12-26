@@ -1,11 +1,13 @@
 'use client';
 
-import { Pencil, Zap, FileText } from 'lucide-react';
+import { Pencil, Zap, FileText, Shield } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 type NavItem = {
   id: string;
   label: string;
   icon: React.ReactNode;
+  adminOnly?: boolean;
 };
 
 interface SidebarProps {
@@ -14,6 +16,8 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ activeItem, onItemChange }: SidebarProps) {
+  const { isAdmin } = useAuth();
+
   const navItems: NavItem[] = [
     { 
       id: 'creator', 
@@ -30,6 +34,12 @@ export default function Sidebar({ activeItem, onItemChange }: SidebarProps) {
       label: 'База Знаний (Вкусы)', 
       icon: <FileText className="w-5 h-5" /> 
     },
+    ...(isAdmin ? [{
+      id: 'admin',
+      label: 'Админ Панель',
+      icon: <Shield className="w-5 h-5" />,
+      adminOnly: true,
+    }] : []),
   ];
 
   return (
