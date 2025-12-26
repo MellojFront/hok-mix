@@ -76,11 +76,11 @@ export default function MyMixes() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-slate-100">Мои Миксы</h2>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <h2 className="text-xl sm:text-2xl font-bold text-slate-100">Мои Миксы</h2>
         <button
           onClick={openAddModal}
-          className="px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all flex items-center gap-2 shadow-lg shadow-red-900/50 hover:shadow-xl hover:shadow-red-900/60 active:scale-[0.98] font-medium"
+          className="w-full sm:w-auto px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-red-900/50 hover:shadow-xl hover:shadow-red-900/60 active:scale-[0.98] font-medium text-sm sm:text-base"
         >
           <Plus className="w-4 h-4" />
           Добавить микс
@@ -89,87 +89,139 @@ export default function MyMixes() {
 
       {myMixes.length === 0 ? (
         <div className="text-center py-12 text-slate-400">
-          <p className="text-lg mb-2">У вас пока нет сохраненных миксов</p>
-          <p className="text-sm">Нажмите "Добавить микс" чтобы создать первый</p>
+          <p className="text-base sm:text-lg mb-2">У вас пока нет сохраненных миксов</p>
+          <p className="text-xs sm:text-sm">Нажмите "Добавить микс" чтобы создать первый</p>
         </div>
       ) : (
-        <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden shadow-lg">
-          <table className="w-full">
-            <thead className="bg-slate-700 border-b border-slate-600">
-              <tr>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-200 uppercase tracking-wider">
-                  Название
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-200 uppercase tracking-wider">
-                  Описание
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-200 uppercase tracking-wider">
-                  Ингредиенты
-                </th>
-                <th className="px-6 py-4 text-right text-xs font-semibold text-slate-200 uppercase tracking-wider">
-                  Действия
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-slate-800 divide-y divide-slate-700">
-              {myMixes.map((mix) => (
-                <tr key={mix.id} className="hover:bg-slate-700 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-semibold text-slate-100">{mix.title}</div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-slate-300 max-w-md truncate">{mix.description}</div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-slate-300">
-                      {mix.ingredients.map((ing, idx) => (
-                        <span key={idx}>
-                          {ing.name} ({ing.percentage}%)
-                          {idx < mix.ingredients.length - 1 && ', '}
-                        </span>
-                      ))}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="flex items-center justify-end gap-3">
-                      <button
-                        onClick={() => setCalculatorMix(mix)}
-                        className="text-green-400 hover:text-green-300 flex items-center gap-1.5 transition-colors"
-                        title="Калькулятор"
-                      >
-                        <Calculator className="w-4 h-4" />
-                        Расчет
-                      </button>
-                      <button
-                        onClick={() => openEditModal(mix)}
-                        className="text-indigo-400 hover:text-indigo-300 flex items-center gap-1.5 transition-colors"
-                      >
-                        <Edit className="w-4 h-4" />
-                        Редактировать
-                      </button>
-                      <button
-                        onClick={() => deleteMix(mix.id)}
-                        className="text-red-400 hover:text-red-300 flex items-center gap-1.5 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        Удалить
-                      </button>
-                    </div>
-                  </td>
+        <>
+          {/* Десктопная таблица */}
+          <div className="hidden md:block bg-slate-800 rounded-xl border border-slate-700 overflow-hidden shadow-lg overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-slate-700 border-b border-slate-600">
+                <tr>
+                  <th className="px-4 lg:px-6 py-3 lg:py-4 text-left text-xs font-semibold text-slate-200 uppercase tracking-wider">
+                    Название
+                  </th>
+                  <th className="px-4 lg:px-6 py-3 lg:py-4 text-left text-xs font-semibold text-slate-200 uppercase tracking-wider">
+                    Описание
+                  </th>
+                  <th className="px-4 lg:px-6 py-3 lg:py-4 text-left text-xs font-semibold text-slate-200 uppercase tracking-wider">
+                    Ингредиенты
+                  </th>
+                  <th className="px-4 lg:px-6 py-3 lg:py-4 text-right text-xs font-semibold text-slate-200 uppercase tracking-wider">
+                    Действия
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="bg-slate-800 divide-y divide-slate-700">
+                {myMixes.map((mix) => (
+                  <tr key={mix.id} className="hover:bg-slate-700 transition-colors">
+                    <td className="px-4 lg:px-6 py-3 lg:py-4 whitespace-nowrap">
+                      <div className="text-sm font-semibold text-slate-100">{mix.title}</div>
+                    </td>
+                    <td className="px-4 lg:px-6 py-3 lg:py-4">
+                      <div className="text-sm text-slate-300 max-w-md truncate">{mix.description}</div>
+                    </td>
+                    <td className="px-4 lg:px-6 py-3 lg:py-4">
+                      <div className="text-sm text-slate-300">
+                        {mix.ingredients.map((ing, idx) => (
+                          <span key={idx}>
+                            {ing.name} ({ing.percentage}%)
+                            {idx < mix.ingredients.length - 1 && ', '}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="px-4 lg:px-6 py-3 lg:py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="flex items-center justify-end gap-2 lg:gap-3">
+                        <button
+                          onClick={() => setCalculatorMix(mix)}
+                          className="text-green-400 hover:text-green-300 flex items-center gap-1 transition-colors text-xs"
+                          title="Калькулятор"
+                        >
+                          <Calculator className="w-4 h-4" />
+                          <span className="hidden lg:inline">Расчет</span>
+                        </button>
+                        <button
+                          onClick={() => openEditModal(mix)}
+                          className="text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition-colors text-xs"
+                        >
+                          <Edit className="w-4 h-4" />
+                          <span className="hidden lg:inline">Редактировать</span>
+                        </button>
+                        <button
+                          onClick={() => deleteMix(mix.id)}
+                          className="text-red-400 hover:text-red-300 flex items-center gap-1 transition-colors text-xs"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          <span className="hidden lg:inline">Удалить</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Мобильные карточки */}
+          <div className="md:hidden space-y-4">
+            {myMixes.map((mix) => (
+              <div
+                key={mix.id}
+                className="bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-lg"
+              >
+                <div className="flex justify-between items-start mb-3">
+                  <h3 className="text-lg font-bold text-slate-100 flex-1">{mix.title}</h3>
+                  <div className="flex gap-2 ml-2">
+                    <button
+                      onClick={() => setCalculatorMix(mix)}
+                      className="p-2 text-green-400 hover:text-green-300 hover:bg-green-900/30 rounded-lg transition-colors"
+                      title="Калькулятор"
+                    >
+                      <Calculator className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => openEditModal(mix)}
+                      className="p-2 text-indigo-400 hover:text-indigo-300 hover:bg-indigo-900/30 rounded-lg transition-colors"
+                      title="Редактировать"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => deleteMix(mix.id)}
+                      className="p-2 text-red-400 hover:text-red-300 hover:bg-red-900/30 rounded-lg transition-colors"
+                      title="Удалить"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+                <p className="text-sm text-slate-300 mb-3">{mix.description}</p>
+                <div className="text-sm text-slate-300 mb-3">
+                  <strong className="text-slate-200">Ингредиенты:</strong>
+                  <div className="mt-1">
+                    {mix.ingredients.map((ing, idx) => (
+                      <span key={idx}>
+                        {ing.name} ({ing.percentage}%)
+                        {idx < mix.ingredients.length - 1 && ', '}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
       {/* Модальное окно */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-          <div className="bg-slate-800 border border-slate-700 rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-2xl font-bold text-slate-100">
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-2 sm:p-4 backdrop-blur-sm">
+          <div className="bg-slate-800 border border-slate-700 rounded-xl max-w-2xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div className="p-4 sm:p-6">
+              <div className="flex justify-between items-center mb-4 sm:mb-6">
+                <h3 className="text-lg sm:text-2xl font-bold text-slate-100">
                   {editingMix ? 'Редактировать микс' : 'Добавить новый микс'}
                 </h3>
                 <button

@@ -47,11 +47,11 @@ export default function MixCalculator({ ingredients, onClose }: MixCalculatorPro
   };
 
   return (
-    <div className="bg-slate-800 border border-slate-700 rounded-xl p-6">
+    <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 sm:p-6">
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center gap-2">
-          <Calculator className="w-5 h-5 text-red-400" />
-          <h3 className="text-lg font-bold text-slate-100">Калькулятор микса</h3>
+          <Calculator className="w-4 h-4 sm:w-5 sm:h-5 text-red-400" />
+          <h3 className="text-base sm:text-lg font-bold text-slate-100">Калькулятор микса</h3>
         </div>
         {onClose && (
           <button
@@ -92,7 +92,7 @@ export default function MixCalculator({ ingredients, onClose }: MixCalculatorPro
       )}
 
       <div className="space-y-3">
-        <div className="grid grid-cols-5 gap-2 text-xs font-semibold text-slate-400 pb-2 border-b border-slate-700">
+        <div className="hidden sm:grid grid-cols-5 gap-2 text-xs font-semibold text-slate-400 pb-2 border-b border-slate-700">
           <div>Ингредиент</div>
           <div className="text-center">%</div>
           <div className="text-center">Граммы</div>
@@ -103,14 +103,22 @@ export default function MixCalculator({ ingredients, onClose }: MixCalculatorPro
         {calculatedGrams.map((ing, index) => (
           <div
             key={index}
-            className="grid grid-cols-5 gap-2 items-center p-2 rounded-lg hover:bg-slate-700/50 transition-colors"
+            className="grid grid-cols-1 sm:grid-cols-5 gap-3 sm:gap-2 items-start sm:items-center p-3 sm:p-2 rounded-lg hover:bg-slate-700/50 transition-colors border border-slate-700 sm:border-0"
           >
-            <div className="text-sm font-medium text-slate-200">{ing.name}</div>
-            <div className="text-center text-sm text-slate-300">{ing.percentage}%</div>
-            <div className="text-center text-sm font-semibold text-slate-100">
+            <div className="text-sm font-medium text-slate-200 sm:col-span-1">
+              <span className="sm:hidden text-xs text-slate-400 mr-2">Ингредиент:</span>
+              {ing.name}
+            </div>
+            <div className="text-center text-sm text-slate-300 sm:col-span-1">
+              <span className="sm:hidden text-xs text-slate-400 mr-2">%:</span>
+              {ing.percentage}%
+            </div>
+            <div className="text-center text-sm font-semibold text-slate-100 sm:col-span-1">
+              <span className="sm:hidden text-xs text-slate-400 mr-2">Граммы:</span>
               {ing.grams.toFixed(1)} г
             </div>
-            <div>
+            <div className="sm:col-span-1">
+              <span className="sm:hidden block text-xs text-slate-400 mb-1">Имеется (г):</span>
               <input
                 type="number"
                 placeholder="0"
@@ -121,7 +129,7 @@ export default function MixCalculator({ ingredients, onClose }: MixCalculatorPro
                 step="0.1"
               />
             </div>
-            <div className="text-center">
+            <div className="text-center sm:col-span-1">
               {ing.available > 0 ? (
                 <span
                   className={`text-xs font-medium px-2 py-1 rounded ${

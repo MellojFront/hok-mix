@@ -57,11 +57,11 @@ export default function KnowledgeBase() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-slate-100">База Знаний</h2>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <h2 className="text-xl sm:text-2xl font-bold text-slate-100">База Знаний</h2>
         <button
           onClick={openAddModal}
-          className="px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all flex items-center gap-2 shadow-lg shadow-red-900/50 hover:shadow-xl hover:shadow-red-900/60 active:scale-[0.98] font-medium"
+          className="w-full sm:w-auto px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-red-900/50 hover:shadow-xl hover:shadow-red-900/60 active:scale-[0.98] font-medium text-sm sm:text-base"
         >
           <Plus className="w-4 h-4" />
           Добавить заметку
@@ -121,46 +121,47 @@ export default function KnowledgeBase() {
 
       {/* Просмотр заметки в полном размере */}
       {viewingNote && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 z-50 backdrop-blur-sm" style={{ left: '256px' }}>
+        <div className="fixed inset-0 bg-black bg-opacity-70 z-50 backdrop-blur-sm lg:left-64">
           <div className="h-full w-full bg-slate-900 overflow-y-auto">
-            <div className="max-w-4xl mx-auto p-8">
-              <div className="flex justify-between items-start mb-6">
+            <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 sm:mb-6">
                 <div className="flex-1">
-                  <h2 className="text-3xl font-bold text-slate-100 mb-3">{viewingNote.title}</h2>
+                  <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-100 mb-3">{viewingNote.title}</h2>
                   {viewingNote.category && (
-                    <span className="inline-block px-3 py-1 text-sm bg-slate-800 text-slate-300 rounded-lg border border-slate-700">
+                    <span className="inline-block px-3 py-1 text-xs sm:text-sm bg-slate-800 text-slate-300 rounded-lg border border-slate-700">
                       {viewingNote.category}
                     </span>
                   )}
                 </div>
-                <div className="flex gap-3">
+                <div className="flex gap-2 sm:gap-3 w-full sm:w-auto">
                   <button
                     onClick={() => {
                       setViewingNote(null);
                       openEditModal(viewingNote);
                     }}
-                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all flex items-center gap-2 shadow-lg shadow-indigo-900/50"
+                    className="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-900/50 text-sm"
                     title="Редактировать"
                   >
                     <Edit className="w-4 h-4" />
-                    Редактировать
+                    <span className="hidden sm:inline">Редактировать</span>
+                    <span className="sm:hidden">Изменить</span>
                   </button>
                   <button
                     onClick={() => setViewingNote(null)}
                     className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
                   >
-                    <X className="w-6 h-6 text-slate-400" />
+                    <X className="w-5 h-5 sm:w-6 sm:h-6 text-slate-400" />
                   </button>
                 </div>
               </div>
               
-              <div className="bg-slate-800 border border-slate-700 rounded-xl p-8 mb-6">
-                <div className="text-slate-200 text-base leading-relaxed whitespace-pre-wrap">
+              <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 sm:p-6 lg:p-8 mb-4 sm:mb-6">
+                <div className="text-slate-200 text-sm sm:text-base leading-relaxed whitespace-pre-wrap">
                   {viewingNote.content}
                 </div>
               </div>
               
-              <div className="text-sm text-slate-400 border-t border-slate-800 pt-4">
+              <div className="text-xs sm:text-sm text-slate-400 border-t border-slate-800 pt-4">
                 Обновлено: {formatDate(viewingNote.updatedAt)}
               </div>
             </div>
@@ -170,11 +171,11 @@ export default function KnowledgeBase() {
 
       {/* Модальное окно редактирования */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-          <div className="bg-slate-800 border border-slate-700 rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-2xl font-bold text-slate-100">
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-2 sm:p-4 backdrop-blur-sm">
+          <div className="bg-slate-800 border border-slate-700 rounded-xl max-w-3xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div className="p-4 sm:p-6">
+              <div className="flex justify-between items-center mb-4 sm:mb-6">
+                <h3 className="text-lg sm:text-2xl font-bold text-slate-100">
                   {editingNote ? 'Редактировать заметку' : 'Добавить новую заметку'}
                 </h3>
                 <button

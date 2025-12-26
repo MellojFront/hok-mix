@@ -34,15 +34,15 @@ export default function Sidebar({ activeItem, onItemChange }: SidebarProps) {
 
   return (
     <aside className="w-64 bg-slate-800 border-r border-slate-700 min-h-screen shadow-lg">
-      <div className="p-6">
-        <h2 className="text-2xl font-bold text-slate-100 mb-8 tracking-tight">Hookah Mix</h2>
+      <div className="p-4 sm:p-6">
+        <h2 className="text-xl sm:text-2xl font-bold text-slate-100 mb-6 sm:mb-8 tracking-tight">Hookah Mix</h2>
         
         <nav className="space-y-1">
           {navItems.map((item) => (
             <button
               key={item.id}
               onClick={() => onItemChange(item.id)}
-              className={`w-full text-left px-4 py-3 rounded-xl transition-all flex items-center gap-3 group ${
+              className={`w-full text-left px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl transition-all flex items-center gap-2 sm:gap-3 group ${
                 activeItem === item.id
                   ? 'bg-red-600 text-white font-semibold shadow-lg shadow-red-900/50'
                   : 'text-slate-300 hover:bg-slate-700 hover:text-slate-100'
@@ -51,7 +51,7 @@ export default function Sidebar({ activeItem, onItemChange }: SidebarProps) {
               <span className={`transition-transform ${activeItem === item.id ? 'scale-110' : 'group-hover:scale-105'}`}>
                 {item.icon}
               </span>
-              <span className="text-sm">{item.label}</span>
+              <span className="text-xs sm:text-sm">{item.label}</span>
             </button>
           ))}
         </nav>
