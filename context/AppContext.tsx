@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Mix, KnowledgeNote } from '@/types';
-import { useAuth } from './AuthContext';
+import { AuthContext, useAuth } from './AuthContext';
 import { getOfficialMixes, getUserMixes, createMix, updateMix, deleteMix as deleteMixFromDB } from '@/lib/mixes';
 import { supabase } from '@/lib/supabase';
 
@@ -231,7 +231,9 @@ BURLEY (Берли):
 ];
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const authContextValue = useContext(AuthContext);
+  const user = authContextValue?.user || null;
+  const isAdmin = authContextValue?.isAdmin || false;
   const [myMixes, setMyMixes] = useState<Mix[]>([]);
   const [readyMixes, setReadyMixes] = useState<Mix[]>([]);
   const [knowledgeNotes, setKnowledgeNotes] = useState<KnowledgeNote[]>([]);
@@ -242,19 +244,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
     loadData();
   }, [user]);
 
+  // Обновляем readyMixes при изменении пользователя
+  useEffect(() => {
+    refreshReadyMixes();
+  }, [user]);
+
   const loadData = async () => {
     setLoading(true);
     try {
       // Загружаем официальные миксы (для всех)
       const official = await getOfficialMixes();
-      setReadyMixes(official);
-
-      // Загружаем личные миксы (только если пользователь авторизован)
+      
+      // Если пользователь авторизован, добавляем его личные миксы
       if (user) {
         const userMixes = await getUserMixes(user.id);
         setMyMixes(userMixes);
+        // Объединяем официальные и личные миксы для отображения
+        setReadyMixes([...official, ...userMixes]);
       } else {
         setMyMixes([]);
+        // Если не авторизован, показываем только официальные
+        setReadyMixes(official);
       }
 
       // Загружаем заметки из LocalStorage
@@ -276,7 +286,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const refreshReadyMixes = async () => {
     const official = await getOfficialMixes();
-    setReadyMixes(official);
+    
+    // Если пользователь авторизован, добавляем его личные миксы
+    if (user) {
+      const userMixes = await getUserMixes(user.id);
+      // Объединяем официальные и личные миксы
+      setReadyMixes([...official, ...userMixes]);
+    } else {
+      // Если не авторизован, показываем только официальные
+      setReadyMixes(official);
+    }
   };
 
   // Сохранение в LocalStorage
@@ -303,9 +322,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       throw new Error('Необходима авторизация');
     }
 
-    const updated = await updateMix(id, mix, user.id);
+    const updated = await updateMix(id, mix, user.id, isAdmin);
     if (updated) {
       setMyMixes(myMixes.map((m) => (m.id === id ? updated : m)));
+      // Обновляем также в readyMixes если это официальный микс
+      if (mix.is_official || updated.is_official) {
+        await refreshReadyMixes();
+      }
     }
   };
 
@@ -314,8 +337,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       throw new Error('Необходима авторизация');
     }
 
-    await deleteMixFromDB(id, user.id);
+    await deleteMixFromDB(id, user.id, isAdmin);
     setMyMixes(myMixes.filter((m) => m.id !== id));
+    // Обновляем readyMixes на случай если удалили официальный микс
+    await refreshReadyMixes();
   };
 
   // База знаний

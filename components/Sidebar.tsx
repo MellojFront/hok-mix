@@ -44,7 +44,7 @@ export default function Sidebar({ activeItem, onItemChange }: SidebarProps) {
 
   return (
     <aside className="w-64 bg-slate-800 border-r border-slate-700 min-h-screen shadow-lg">
-      <div className="p-4 sm:p-6">
+      <div className="p-4 sm:p-6 pt-16 lg:pt-4 sm:pt-6">
         <h2 className="text-xl sm:text-2xl font-bold text-slate-100 mb-6 sm:mb-8 tracking-tight">Hookah Mix</h2>
         
         <nav className="space-y-1">

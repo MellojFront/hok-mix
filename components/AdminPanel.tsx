@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { Mix } from '@/types';
-import { Shield, Check, X, Eye } from 'lucide-react';
+import { Shield, Check, X, Eye, BarChart3 } from 'lucide-react';
+import AdminAnalytics from './AdminAnalytics';
 
 interface Submission {
   id: string;
@@ -21,6 +22,7 @@ export default function AdminPanel() {
   const { isAdmin } = useAuth();
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'submissions' | 'analytics'>('submissions');
 
   useEffect(() => {
     if (isAdmin) {
@@ -127,6 +129,36 @@ export default function AdminPanel() {
         <h2 className="text-xl sm:text-2xl font-bold text-slate-100">Админ Панель</h2>
       </div>
 
+      {/* Табы */}
+      <div className="flex gap-2 mb-6 border-b border-slate-700">
+        <button
+          onClick={() => setActiveTab('submissions')}
+          className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${
+            activeTab === 'submissions'
+              ? 'border-red-600 text-red-400'
+              : 'border-transparent text-slate-400 hover:text-slate-300'
+          }`}
+        >
+          Предложения
+        </button>
+        <button
+          onClick={() => setActiveTab('analytics')}
+          className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 flex items-center gap-2 ${
+            activeTab === 'analytics'
+              ? 'border-red-600 text-red-400'
+              : 'border-transparent text-slate-400 hover:text-slate-300'
+          }`}
+        >
+          <BarChart3 className="w-4 h-4" />
+          Аналитика
+        </button>
+      </div>
+
+      {/* Контент табов */}
+      {activeTab === 'analytics' ? (
+        <AdminAnalytics />
+      ) : (
+        <>
       {pendingSubmissions.length === 0 ? (
         <div className="text-center py-12 text-slate-400">
           <p className="text-lg mb-2">Нет предложений на рассмотрение</p>
@@ -180,6 +212,8 @@ export default function AdminPanel() {
             </div>
           ))}
         </div>
+      )}
+        </>
       )}
     </div>
   );

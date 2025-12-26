@@ -52,7 +52,7 @@ export default function UserMenu() {
             className="fixed inset-0 z-10"
             onClick={() => setIsMenuOpen(false)}
           />
-          <div className="absolute right-0 mt-2 w-48 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-20">
+          <div className="absolute right-0 mt-2 w-48 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-[60]">
             <div className="p-2">
               <div className="px-3 py-2 text-sm text-slate-300 border-b border-slate-700">
                 {user.email}

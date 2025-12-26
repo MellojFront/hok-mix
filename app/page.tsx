@@ -37,13 +37,13 @@ export default function Home() {
           {/* Мобильное меню кнопка */}
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="fixed top-4 left-4 z-50 lg:hidden p-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-100 hover:bg-slate-700 transition-colors"
+            className="fixed top-4 left-4 z-50 lg:hidden p-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-100 hover:bg-slate-700 transition-colors shadow-lg"
           >
             {isSidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
 
           {/* User Menu */}
-          <div className="fixed top-4 right-4 z-50">
+          <div className="fixed top-4 right-4 z-50 lg:z-50">
             <UserMenu />
           </div>
 
@@ -70,8 +70,10 @@ export default function Home() {
             />
           </div>
 
-          <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-auto bg-slate-900 w-full lg:w-auto pt-16 sm:pt-8">
-            {renderContent()}
+          <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-auto bg-slate-900 w-full lg:w-auto pt-20 sm:pt-16 lg:pt-8">
+            <div className="max-w-full pr-20 sm:pr-28 lg:pr-32">
+              {renderContent()}
+            </div>
           </main>
         </div>
       </AppProvider>

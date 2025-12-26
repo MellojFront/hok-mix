@@ -57,11 +57,11 @@ export default function KnowledgeBase() {
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <h2 className="text-xl sm:text-2xl font-bold text-slate-100">База Знаний</h2>
+      <div className="mb-6">
+        <h2 className="text-xl sm:text-2xl font-bold text-slate-100 mb-4">База Знаний</h2>
         <button
           onClick={openAddModal}
-          className="w-full sm:w-auto px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-red-900/50 hover:shadow-xl hover:shadow-red-900/60 active:scale-[0.98] font-medium text-sm sm:text-base"
+          className="px-3 py-1.5 text-sm text-slate-300 hover:text-slate-100 border border-slate-600 hover:border-slate-500 rounded-lg transition-colors flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />
           Добавить заметку

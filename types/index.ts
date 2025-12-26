@@ -13,6 +13,8 @@ export interface Mix {
   updatedAt: number;
   author_name?: string | null;
   is_official?: boolean;
+  is_public?: boolean;
+  created_by?: string | null;
 }
 
 export interface KnowledgeNote {

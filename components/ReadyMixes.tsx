@@ -4,7 +4,8 @@ import { useState, useMemo, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
 import { useAuth } from '@/context/AuthContext';
 import { Mix } from '@/types';
-import { Search, ChevronLeft, ChevronRight, Send } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { publishMix, updateMix, deleteMix as deleteMixFromDB } from '@/lib/mixes';
 import MixCard from './MixCard';
 import SubmitMixModal from './SubmitMixModal';
 
@@ -12,7 +13,7 @@ const ITEMS_PER_PAGE = 6;
 
 export default function ReadyMixes() {
   const { readyMixes, addMix, refreshReadyMixes, loading } = useApp();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [submitMix, setSubmitMix] = useState<Mix | null>(null);
@@ -45,6 +46,39 @@ export default function ReadyMixes() {
       return;
     }
     setSubmitMix(mix);
+  };
+
+  const handleEdit = async (mix: Mix) => {
+    // TODO: Открыть модальное окно редактирования
+    alert('Редактирование микса (будет реализовано)');
+  };
+
+  const handleDelete = async (mix: Mix) => {
+    if (!user) return;
+    
+    if (!confirm(`Удалить микс "${mix.title}"?`)) return;
+
+    try {
+      await deleteMixFromDB(mix.id, user.id, isAdmin);
+      await refreshReadyMixes();
+      alert('Микс удален');
+    } catch (err: any) {
+      alert(err.message || 'Ошибка при удалении');
+    }
+  };
+
+  const handlePublish = async (mix: Mix) => {
+    if (!isAdmin) return;
+
+    if (!confirm(`Опубликовать микс "${mix.title}" как официальный?`)) return;
+
+    try {
+      await publishMix(mix.id);
+      await refreshReadyMixes();
+      alert('Микс опубликован!');
+    } catch (err: any) {
+      alert(err.message || 'Ошибка при публикации');
+    }
   };
 
   const filteredMixes = useMemo(() => {
@@ -105,10 +139,19 @@ export default function ReadyMixes() {
             {paginatedMixes.map((mix) => (
               <div key={mix.id}>
                 <MixCard
+                  id={mix.id}
                   title={mix.title}
                   description={mix.description}
                   ingredients={mix.ingredients}
                   author_name={mix.author_name}
+                  is_official={mix.is_official}
+                  is_public={mix.is_public}
+                  created_by={mix.created_by}
+                  currentUserId={user?.id || null}
+                  isAdmin={isAdmin}
+                  onEdit={() => handleEdit(mix)}
+                  onDelete={() => handleDelete(mix)}
+                  onPublish={() => handlePublish(mix)}
                   onLoadToEditor={() => handleLoadToEditor(mix)}
                   onSubmitForApproval={() => handleSubmitForApproval(mix)}
                 />
