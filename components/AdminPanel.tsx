@@ -3,8 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
-import { Mix } from '@/types';
-import { Shield, Check, X, Eye, BarChart3 } from 'lucide-react';
+import { Shield, Check, X, BarChart3 } from 'lucide-react';
 import AdminAnalytics from './AdminAnalytics';
 
 interface Submission {
@@ -32,19 +31,18 @@ export default function AdminPanel() {
 
   const loadSubmissions = async () => {
     try {
-      const { data, error } = await supabase
-        .from('mix_submissions')
+      // Используем as any для таблицы, чтобы избежать ошибок типов при SELECT
+      const { data, error } = await (supabase
+        .from('mix_submissions') as any)
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      // Получаем информацию о пользователях через публичную функцию или просто используем ID
-      // В будущем можно добавить таблицу profiles для хранения имен пользователей
-      const submissionsWithUsers = (data || []).map((sub) => {
+      const submissionsWithUsers = (data || []).map((sub: any) => {
         return {
           ...sub,
-          user_email: `Пользователь ${sub.submitted_by.substring(0, 8)}...`, // Показываем часть ID
+          user_email: `Пользователь ${sub.submitted_by ? sub.submitted_by.substring(0, 8) : '...'}...`,
         };
       });
 
@@ -58,27 +56,30 @@ export default function AdminPanel() {
 
   const approveSubmission = async (submission: Submission) => {
     try {
-      // Создаем официальный микс
-      const { data: mixData, error: mixError } = await supabase
-        .from('mixes')
-        .insert({
-          title: submission.title,
-          description: submission.description,
-          ingredients: submission.ingredients,
-          is_official: true,
-          author_name: submission.user_email || 'Пользователь',
-        })
+      // 1. Создаем официальный микс
+      // (supabase.from('mixes') as any) отключает проверку типов для таблицы
+      const { data: mixData, error: mixError } = await (supabase
+        .from('mixes') as any) 
+        .insert([
+          {
+            title: submission.title,
+            description: submission.description,
+            ingredients: submission.ingredients,
+            is_official: true,
+            author_name: submission.user_email,
+          }
+        ])
         .select()
         .single();
 
       if (mixError) throw mixError;
 
-      // Обновляем статус предложения и связываем с миксом
-      const { error: updateError } = await supabase
-        .from('mix_submissions')
+      // 2. Обновляем статус предложения
+      const { error: updateError } = await (supabase
+        .from('mix_submissions') as any)
         .update({ 
           status: 'approved',
-          mix_id: mixData.id,
+          mix_id: mixData?.id, // Используем опциональную цепочку и any выше спасет нас
         })
         .eq('id', submission.id);
 
@@ -94,8 +95,8 @@ export default function AdminPanel() {
 
   const rejectSubmission = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from('mix_submissions')
+      const { error } = await (supabase
+        .from('mix_submissions') as any)
         .update({ status: 'rejected' })
         .eq('id', id);
 
@@ -159,63 +160,62 @@ export default function AdminPanel() {
         <AdminAnalytics />
       ) : (
         <>
-      {pendingSubmissions.length === 0 ? (
-        <div className="text-center py-12 text-slate-400">
-          <p className="text-lg mb-2">Нет предложений на рассмотрение</p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {pendingSubmissions.map((submission) => (
-            <div
-              key={submission.id}
-              className="bg-slate-800 border border-slate-700 rounded-xl p-4 sm:p-6"
-            >
-              <div className="flex justify-between items-start mb-4">
-                <div className="flex-1">
-                  <h3 className="text-lg sm:text-xl font-bold text-slate-100 mb-2">
-                    {submission.title}
-                  </h3>
-                  <p className="text-sm text-slate-400 mb-2">
-                    От: {submission.user_email}
-                  </p>
-                  <p className="text-sm text-slate-300">{submission.description}</p>
-                </div>
-              </div>
-
-              <div className="mb-4">
-                <strong className="text-slate-200 text-sm">Ингредиенты:</strong>
-                <div className="mt-2 space-y-1">
-                  {submission.ingredients.map((ing: any, idx: number) => (
-                    <div key={idx} className="text-sm text-slate-300">
-                      {ing.name} - {ing.percentage}%
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex gap-2">
-                <button
-                  onClick={() => approveSubmission(submission)}
-                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-green-900/50"
-                >
-                  <Check className="w-4 h-4" />
-                  Одобрить
-                </button>
-                <button
-                  onClick={() => rejectSubmission(submission.id)}
-                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-red-900/50"
-                >
-                  <X className="w-4 h-4" />
-                  Отклонить
-                </button>
-              </div>
+          {pendingSubmissions.length === 0 ? (
+            <div className="text-center py-12 text-slate-400">
+              <p className="text-lg mb-2">Нет предложений на рассмотрение</p>
             </div>
-          ))}
-        </div>
-      )}
+          ) : (
+            <div className="space-y-4">
+              {pendingSubmissions.map((submission) => (
+                <div
+                  key={submission.id}
+                  className="bg-slate-800 border border-slate-700 rounded-xl p-4 sm:p-6"
+                >
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex-1">
+                      <h3 className="text-lg sm:text-xl font-bold text-slate-100 mb-2">
+                        {submission.title}
+                      </h3>
+                      <p className="text-sm text-slate-400 mb-2">
+                        От: {submission.user_email}
+                      </p>
+                      <p className="text-sm text-slate-300">{submission.description}</p>
+                    </div>
+                  </div>
+
+                  <div className="mb-4">
+                    <strong className="text-slate-200 text-sm">Ингредиенты:</strong>
+                    <div className="mt-2 space-y-1">
+                      {submission.ingredients.map((ing: any, idx: number) => (
+                        <div key={idx} className="text-sm text-slate-300">
+                          {ing.name} - {ing.percentage}%
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => approveSubmission(submission)}
+                      className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-green-900/50"
+                    >
+                      <Check className="w-4 h-4" />
+                      Одобрить
+                    </button>
+                    <button
+                      onClick={() => rejectSubmission(submission.id)}
+                      className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-red-900/50"
+                    >
+                      <X className="w-4 h-4" />
+                      Отклонить
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </>
       )}
     </div>
   );
 }
-
